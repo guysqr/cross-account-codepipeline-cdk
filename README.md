@@ -35,15 +35,15 @@ We're going to use repo mirroring to reflect your GitLab repo into AWS CodeCommi
 
 ### Create a mirror repo in CodeCommit
 
-The `create-repo-<repo-name>` stack will allow you to create a CodeCommit repo and IAM user with minimal privileges that can be used to mirror your GitLab repo into CodeCommit.
+The `create-repo-<reponame>` stack will allow you to create a CodeCommit repo and IAM user with minimal privileges that can be used to mirror your GitLab repo into CodeCommit.
 
-Run this stack, swapping `<repo-name>` for the name of the CodeCommit repo you want to create. I suggest you use the original repo name with `-mirror` on the end as your CodeCommit repo name, but you can pass whatever name you like (so long as it's a combination of letters, numbers, periods, underscores, and dashes between 1 and 100 characters in length.
+Run this stack, swapping `<reponame>` for the name of the CodeCommit repo you want to create. I suggest you use the original repo name with `-mirror` on the end as your CodeCommit repo name, but you can pass whatever name you like (so long as it's a combination of letters, numbers, periods, underscores, and dashes between 1 and 100 characters in length.
 
 The repo and pipeline stacks should be created in your DevOps/Shared Services account, so use a profile here that will deploy to that account. Also, you will want to create the repo in the same AWS region as your deployment pipeline.
 
 ```
-cdk deploy create-repo-<repo-name> \
-    -c repo=<repo-name> \
+cdk deploy create-repo-<reponame> \
+    -c repo=<reponame> \
     -c region=<region> \
     --profile <devops-account-profile>
 ```
@@ -254,7 +254,7 @@ The process is similar to the S3 process but we don't need the name of the deplo
 The final CLI command should look something like this:
 
 ```
-cdk deploy cf-create-pipeline-<repo-name>-<your-branch> \
+cdk deploy cf-create-pipeline-<reponame>-<branch> \
     -c repo=<reponame> \
     -c region=<region> \
     -c branch=<branch> \
@@ -268,7 +268,7 @@ cdk deploy cf-create-pipeline-<repo-name>-<your-branch> \
 As with the S3 Pipeline, you can add manual approval as a stage before the CloudFormation Execute Change Set stage by adding the `-c approvers="<someone@somewhere.com>"`.
 
 ```
-cdk deploy cf-create-pipeline-<repo-name>-<your-branch> \
+cdk deploy cf-create-pipeline-<reponame>-<branch> \
     -c repo=<reponame> \
     -c region=<region> \
     -c branch=<branch> \
@@ -285,6 +285,30 @@ To trigger the pipeline, merge code changes to the `<branch>` branch of `<repona
 ```
 % aws codepipeline start-pipeline-execution --name <pipeline-name> --region <region> --profile <devops-account>
 ```
+
+## The Parameter Stack
+
+There is one more stack in this project, and it's there as a utility should you want to use it. It will allow you to quickly create one or more repo+branch scoped paramaters in Parameter Store. There is an example of how to add Parameter Store values to your `buildspec.yml` in [example-s3-buildspec.yml](./example-s3-buildspec.yml)
+
+To use it:
+
+```
+cdk deploy parameter-stack-<reponame>-<branch> \
+    -c repo=<reponame> \
+    -c region=<region> \
+    -c parameter_list=<key>:<value>,<key2>,<key3> \
+    --profile <profile>
+```
+
+Note you can choose to set a value or not, using a colon `:` to separate the key and value. If you don't specify a value we will set the value to `placeholder`.
+
+To allow for multiple copies of the same parameters to co-exist in the one account and region, parameters are scoped to your repo and branch name by using standard slash notation:
+
+```
+/pipeline-<reponame>-<branch>/<key>
+```
+
+Note it can only be used to create StringValue types, but you could hack it to support StringLists if you wanted to.
 
 ## Refining the deployment permissions
 

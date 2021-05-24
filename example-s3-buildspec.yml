@@ -1,9 +1,9 @@
 version: 0.2
 env:
   parameter-store:
-    REACT_APP_USERPOOL_ID: /pwa/$ENVIRONMENT/cognito_userpool
-    REACT_APP_CLIENT_ID: /pwa/$ENVIRONMENT/cognito_client_id
-    REACT_APP_API_KEY: /pwa/$ENVIRONMENT/api_key
+    REACT_APP_USERPOOL_ID: /pipeline-pwa-master/cognito_userpool
+    REACT_APP_CLIENT_ID: /pipeline-pwa-master/cognito_client_id
+    REACT_APP_API_KEY: /pipeline-pwa-master/api_key
 phases:
   install:
     commands:
