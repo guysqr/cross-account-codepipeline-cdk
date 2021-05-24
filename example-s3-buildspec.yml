@@ -1,0 +1,29 @@
+version: 0.2
+env:
+  parameter-store:
+    REACT_APP_USERPOOL_ID: /pwa/$ENVIRONMENT/cognito_userpool
+    REACT_APP_CLIENT_ID: /pwa/$ENVIRONMENT/cognito_client_id
+    REACT_APP_API_KEY: /pwa/$ENVIRONMENT/api_key
+phases:
+  install:
+    commands:
+      - npm i npm@latest -g
+      - pip install --upgrade pip
+      - pip install --upgrade awscli
+  pre_build:
+    commands:
+      - npm install
+  build:
+    commands:
+      - export REACT_APP_NODE_ENV=$ENVIRONMENT
+      - echo REACT_APP_NODE_ENV=$REACT_APP_NODE_ENV
+      - npm run build
+
+artifacts:
+  base-directory: build
+  discard-paths: no
+  files:
+    - "**/*"
+  base-directory: build
+  name: build-artifacts
+  discard-paths: no

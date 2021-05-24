@@ -1,0 +1,19 @@
+# buildspec.yml
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - npm install -g aws-cdk@1.102.0
+      - pip install -r requirements.txt
+  build:
+    commands:
+      - cdk synth <stack-name> -c environment=$ENVIRONMENT > packaged.yaml
+  post_build:
+    commands:
+      - ls -al $CODEBUILD_SRC_DIR
+      - more packaged.yaml
+artifacts:
+  files:
+    - packaged.yaml

@@ -1,0 +1,16 @@
+# buildspec.yml
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+  build:
+    commands:
+      - sam build
+  post_build:
+    commands:
+      - sam package --s3-bucket $PACKAGE_BUCKET --output-template-file packaged.yaml
+      - ls -al $CODEBUILD_SRC_DIR
+artifacts:
+  files:
+    - packaged.yaml
