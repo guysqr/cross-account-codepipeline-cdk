@@ -194,7 +194,7 @@ class CrossAccountRoleStack(cdk.Stack):
                     resources=["arn:aws:iam::" + self.account + ":role/*"],
                 )
             )
-
+            lambda_resource_prefix = "arn:aws:lambda:"
             deploy_policy_statements.append(
                 iam.PolicyStatement(
                     actions=[
@@ -217,18 +217,23 @@ class CrossAccountRoleStack(cdk.Stack):
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
-                        "arn:aws:lambda:" + self.region + ":" + self.account + ":*:*",
-                        "arn:aws:lambda:"
+                        lambda_resource_prefix
+                        + self.region
+                        + ":"
+                        + self.account
+                        + ":*:*",
+                        lambda_resource_prefix
                         + self.region
                         + ":"
                         + self.account
                         + ":layer:*:*",
-                        "arn:aws:lambda:"
+                        lambda_resource_prefix
                         + self.region
                         + ":"
                         + self.account
                         + ":layer:*",
-                        "arn:aws:lambda:ap-southeast-2:580247275435:layer:LambdaInsightsExtension:14",
+                        lambda_resource_prefix
+                        + "ap-southeast-2:580247275435:layer:LambdaInsightsExtension:14",
                     ],
                 )
             )
