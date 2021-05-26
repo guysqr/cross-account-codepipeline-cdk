@@ -75,10 +75,6 @@ class CrossAccountRoleStack(cdk.Stack):
         policy_statements.append(
             iam.PolicyStatement(
                 actions=[
-                    # "kms:DescribeKey",
-                    # "kms:GenerateDataKey*",
-                    # "kms:Encrypt",
-                    # "kms:ReEncrypt*",
                     "kms:Decrypt",
                 ],
                 effect=iam.Effect.ALLOW,
