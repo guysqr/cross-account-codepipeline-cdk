@@ -22,19 +22,16 @@ class ParameterStack(cdk.Stack):
             raise ValueError(
                 "A parameter list needs to be provided as `-c parameter_list=<param1,param2>`"
             )
-            exit()
 
         if repo_name == None:
             raise ValueError(
                 "The repo name needs to be provided as `-c repo=<repo-name>`"
             )
-            exit()
 
         if repo_branch == None:
             raise ValueError(
                 "The branch this pipeline will deploy must be provided as `-c branch=<branch-name>`"
             )
-            exit()
 
         for param in params_to_create:
             split_params = param.split(":")

@@ -34,19 +34,16 @@ class CloudformationPipelineStack(cdk.Stack):
             raise ValueError(
                 "The repo name needs to be provided as `-c repo=<repo-name>`"
             )
-            exit()
 
         if repo_branch == None:
             raise ValueError(
                 "The branch this pipeline will deploy must be provided as `-c branch=<branch-name>`"
             )
-            exit()
 
         if cross_account_role_arn == None:
             raise ValueError(
                 "The cross account role this pipeline will assume must be provided as `-c cross_account_role_arn=<cross_account_role_arn>`"
             )
-            exit()
 
         pipeline_key = kms.Key.from_key_arn(
             self,

@@ -18,7 +18,6 @@ class RepoStack(core.Stack):
 
         if repo_name == None:
             raise ValueError("Need repo name to be provided as `-c repo=<repo name>`")
-            exit()
 
         repo_desc = "Repo created by " + self.stack_name + "."
         if repo_name.endswith("-mirror"):

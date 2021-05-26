@@ -32,13 +32,11 @@ class CrossAccountRoleStack(cdk.Stack):
             raise ValueError(
                 "The AWS account ID to be trusted needs to be provided as `-c devops_account_id=<account-id>`"
             )
-            exit()
 
         if pipeline_key_arn == None:
             raise ValueError(
                 "The KMS key from the devops account needs to be provided as `-c pipeline_key_arn=<key-arn>`"
             )
-            exit()
 
         # if no artifact bucket is provided, allow access to all buckets
         # otherwise specify only the artifact bucket
