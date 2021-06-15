@@ -1,5 +1,7 @@
+import constructs
+import aws_cdk as cdk
+
 from aws_cdk import (
-    core as cdk,
     aws_codebuild as codebuild,
     aws_codecommit as codecommit,
     aws_codepipeline as codepipeline,
@@ -14,7 +16,7 @@ from aws_cdk import (
 class PipelineInfraStack(cdk.Stack):
     def __init__(
         self,
-        scope: cdk.Construct,
+        scope: constructs.Construct,
         id: str,
         target_account_id: str,
         repo_name: str,

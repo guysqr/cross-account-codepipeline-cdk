@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-from aws_cdk import core
+# from aws_cdk import core
+# import constructs
+import aws_cdk as cdk
+from aws_cdk import Aspects
 
 from stacks.repo_stack import RepoStack
 from stacks.cloudformation_pipeline_stack import CloudformationPipelineStack
@@ -11,7 +14,12 @@ from stacks.parameter_stack import ParameterStack
 
 import os
 
-app = core.App()
+app = cdk.App()
+
+# if os.environ.get("CDK_DEFAULT_ACCOUNT") is None:
+#     raise ValueError(
+#         "You are not logged in to AWS, or you need to otherwise set CDK_DEFAULT_ACCOUNT in your environment"
+#     )
 
 account_num = os.environ["CDK_DEFAULT_ACCOUNT"]
 deploy_region = os.environ["CDK_DEFAULT_REGION"]
@@ -41,7 +49,7 @@ region = app.node.try_get_context("region")
 if region:
     deploy_region = region
 
-deploy_environment = core.Environment(account=account_num, region=deploy_region)
+deploy_environment = cdk.Environment(account=account_num, region=deploy_region)
 
 if build_env == None:
     build_env = ""
@@ -120,10 +128,11 @@ if all([parameter_list, repo, branch]):
     )
 
 if build_env:
-    app.node.apply_aspect(core.Tag("environment-type", build_env))
+    Aspects.of(app).add(cdk.Tag("environment-type", build_env))
+    # app.node.apply_aspect(cdk.Tag("environment-type", build_env))
 
-app.node.apply_aspect(core.Tag("repository", repo))
-app.node.apply_aspect(core.Tag("branch", branch))
+Aspects.of(app).add(cdk.Tag("repository", repo))
+Aspects.of(app).add(cdk.Tag("branch", branch))
 # more tags here
 
 app.synth()

@@ -1,13 +1,8 @@
+import constructs
+import aws_cdk as cdk
 from aws_cdk import (
-    core as cdk,
-    aws_codebuild as codebuild,
-    aws_codecommit as codecommit,
-    aws_codepipeline as codepipeline,
-    aws_codepipeline_actions as codepipeline_actions,
-    aws_lambda as lambda_,
     aws_s3 as s3,
     aws_iam as iam,
-    aws_kms as kms,
 )
 
 ####################################################################################################
@@ -18,7 +13,7 @@ from aws_cdk import (
 class CrossAccountRoleStack(cdk.Stack):
     def __init__(
         self,
-        scope: cdk.Construct,
+        scope: constructs.Construct,
         id: str,
         devops_account_id: str,
         pipeline_key_arn: str,

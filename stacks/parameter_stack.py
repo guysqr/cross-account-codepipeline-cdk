@@ -1,5 +1,7 @@
+import constructs
+import aws_cdk as cdk
+
 from aws_cdk import (
-    core as cdk,
     aws_ssm as ssm,
 )
 
@@ -7,7 +9,7 @@ from aws_cdk import (
 class ParameterStack(cdk.Stack):
     def __init__(
         self,
-        scope: cdk.Construct,
+        scope: constructs.Construct,
         id: str,
         parameter_list: str,
         repo_name: str,
@@ -57,6 +59,3 @@ class ParameterStack(cdk.Stack):
                 value=param_name,
                 export_name=self.stack_name + ":" + pipeline_name + "-" + name,
             )
-
-
-# cdk deploy  parameter-stack-reponame-branch -c repo=reponame -c branch=branch -c parameter_list=foo:value,bar:othervalue --profile contactmap

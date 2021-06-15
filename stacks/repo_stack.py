@@ -1,18 +1,15 @@
+import constructs
+import aws_cdk as cdk
+
 from aws_cdk import (
-    core,
-    aws_codebuild as codebuild,
     aws_codecommit as codecommit,
-    aws_codepipeline as codepipeline,
-    aws_codepipeline_actions as codepipeline_actions,
-    aws_lambda as lambda_,
-    aws_s3 as s3,
     aws_iam as iam,
 )
 
 
-class RepoStack(core.Stack):
+class RepoStack(cdk.Stack):
     def __init__(
-        self, scope: core.Construct, id: str, repo_name: str, **kwargs
+        self, scope: constructs.Construct, id: str, repo_name: str, **kwargs
     ) -> None:
         super().__init__(scope, id, **kwargs)
 
@@ -53,9 +50,9 @@ class RepoStack(core.Stack):
         )
         gitlab_user.attach_inline_policy(gitlab_policy)
 
-        core.CfnOutput(
+        cdk.CfnOutput(
             self,
             "CodeCommitRepoCloneUrlHttp",
             value=code_repo.repository_clone_url_http,
         )
-        core.CfnOutput(self, "IamUserForGitlab", value=gitlab_user.user_name)
+        cdk.CfnOutput(self, "IamUserForGitlab", value=gitlab_user.user_name)
