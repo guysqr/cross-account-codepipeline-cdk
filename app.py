@@ -16,10 +16,10 @@ import os
 
 app = cdk.App()
 
-# if os.environ.get("CDK_DEFAULT_ACCOUNT") is None:
-#     raise ValueError(
-#         "You are not logged in to AWS, or you need to otherwise set CDK_DEFAULT_ACCOUNT in your environment"
-#     )
+if os.environ.get("CDK_DEFAULT_ACCOUNT") is None:
+    raise ValueError(
+        "You are not logged in to AWS, or you need to otherwise set CDK_DEFAULT_ACCOUNT in your environment"
+    )
 
 account_num = os.environ["CDK_DEFAULT_ACCOUNT"]
 deploy_region = os.environ["CDK_DEFAULT_REGION"]
@@ -129,7 +129,6 @@ if all([parameter_list, repo, branch]):
 
 if build_env:
     Aspects.of(app).add(cdk.Tag("environment-type", build_env))
-    # app.node.apply_aspect(cdk.Tag("environment-type", build_env))
 
 Aspects.of(app).add(cdk.Tag("repository", repo))
 Aspects.of(app).add(cdk.Tag("branch", branch))
