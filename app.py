@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# from aws_cdk import core
-# import constructs
 import aws_cdk as cdk
 from aws_cdk import Aspects
 

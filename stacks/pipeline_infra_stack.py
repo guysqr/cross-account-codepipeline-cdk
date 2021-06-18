@@ -2,12 +2,6 @@ import constructs
 import aws_cdk as cdk
 
 from aws_cdk import (
-    aws_codebuild as codebuild,
-    aws_codecommit as codecommit,
-    aws_codepipeline as codepipeline,
-    aws_codepipeline_actions as codepipeline_actions,
-    aws_lambda as lambda_,
-    aws_s3 as s3,
     aws_iam as iam,
     aws_kms as kms,
 )
@@ -31,7 +25,7 @@ class PipelineInfraStack(cdk.Stack):
             description="CICD CMK shared with " + target_account_id,
             alias="cicd-" + repo_name + "-" + repo_branch + "-" + target_account_id,
             enable_key_rotation=False,
-            trust_account_identities=True,
+            # trust_account_identities=True,
         )
 
         # the target account needs to be able to use the key to decrypt the artifacts
