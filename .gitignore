@@ -7,6 +7,8 @@ __pycache__
 .DS_Store
 stacks/.DS_Store
 .vscode
+.venv
+logs
 
 # CDK asset staging directory
 .cdk.staging
