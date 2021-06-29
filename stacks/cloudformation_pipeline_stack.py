@@ -22,7 +22,7 @@ class CloudformationPipelineStack(cdk.Stack):
         build_env: str,
         cross_account_role_arn: str,
         deployment_role_arn: str,
-        github_oauth_token: str,
+        github_secret_arn: str,
         stack_name: str,
         repo_owner: str,
         approvers: str,
@@ -78,24 +78,26 @@ class CloudformationPipelineStack(cdk.Stack):
             role_arn=deployment_role_arn,
         )
 
-        # artifacts_bucket.add_to_resource_policy(
-        #     iam.PolicyStatement(
-        #         actions=["s3:Get*", "s3:Put*"],
-        #         resources=[artifacts_bucket.arn_for_objects("*")],
-        #         principals=[iam.AccountPrincipal(account_id=target_account_id)],
-        #     )
-        # )
+        artifacts_bucket.add_to_resource_policy(
+            iam.PolicyStatement(
+                actions=["s3:Get*", "s3:Put*"],
+                resources=[artifacts_bucket.arn_for_objects("*")],
+                principals=[iam.ArnPrincipal(arn=deployment_role_arn)]
+                # principals=[iam.AccountPrincipal(account_id=target_account_id)],
+            )
+        )
 
-        # artifacts_bucket.add_to_resource_policy(
-        #     iam.PolicyStatement(
-        #         actions=["s3:List*"],
-        #         resources=[
-        #             artifacts_bucket.bucket_arn,
-        #             artifacts_bucket.arn_for_objects("*"),
-        #         ],
-        #         principals=[iam.AccountPrincipal(account_id=target_account_id)],
-        #     )
-        # )
+        artifacts_bucket.add_to_resource_policy(
+            iam.PolicyStatement(
+                actions=["s3:List*"],
+                resources=[
+                    artifacts_bucket.bucket_arn,
+                    artifacts_bucket.arn_for_objects("*"),
+                ],
+                principals=[iam.ArnPrincipal(arn=deployment_role_arn)]
+                # principals=[iam.AccountPrincipal(account_id=target_account_id)],
+            )
+        )
 
         # create the pipeline and tell it to use the artifacts bucket
         pipeline = codepipeline.Pipeline(
@@ -123,12 +125,14 @@ class CloudformationPipelineStack(cdk.Stack):
         # create the source stage, which grabs the code from the repo and outputs it as an artifact
         source_output = codepipeline.Artifact()
 
-        if github_oauth_token and repo_owner:
+        if github_secret_arn and repo_owner:
             pipeline.add_stage(
                 stage_name="Source",
                 actions=[
                     codepipeline_actions.GitHubSourceAction(
-                        oauth_token=github_oauth_token,
+                        oauth_token=cdk.SecretValue.secrets_manager(
+                            github_secret_arn, json_field="token"
+                        ),
                         owner=repo_owner,
                         action_name="GetGitHubSource",
                         repo=repo_name,
