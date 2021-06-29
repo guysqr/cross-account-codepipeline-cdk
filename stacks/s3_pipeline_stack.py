@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_iam as iam,
     aws_kms as kms,
+    aws_secretsmanager as secretsmanager,
 )
 
 
@@ -22,7 +23,7 @@ class S3PipelineStack(cdk.Stack):
         target_bucket: str,
         approvers: str,
         cross_account_role_arn: str,
-        github_oauth_token: str,
+        github_secret_arn: str,
         repo_owner: str,
         **kwargs
     ) -> None:
@@ -52,12 +53,12 @@ class S3PipelineStack(cdk.Stack):
             self, "BucketByAtt", bucket_name=target_bucket
         )
 
-        # get the key ARN from the create-pipeline-infra stack
+        # get the key ARN from the create-pipeline-key stack
         pipeline_key = kms.Key.from_key_arn(
             self,
             "DeployKey",
             key_arn=cdk.Fn.import_value(
-                self.stack_name.replace("s3-create-pipeline", "create-pipeline-infra")
+                self.stack_name.replace("s3-pipeline", "pipeline-key")
                 + ":PipelineKeyArn"
             ),
         )
@@ -70,7 +71,7 @@ class S3PipelineStack(cdk.Stack):
             encryption=s3.BucketEncryption.KMS,
         )
 
-        # create the pipeline and tell it to use the artifacts bucket
+        # create the pipeline a nd tell it to use the artifacts bucket
         pipeline = codepipeline.Pipeline(
             self,
             "Pipeline-" + repo_name + "-" + repo_branch,
@@ -82,12 +83,15 @@ class S3PipelineStack(cdk.Stack):
         # create the source stage, which grabs the code from the repo and outputs it as an artifact
         source_output = codepipeline.Artifact()
 
-        if github_oauth_token and repo_owner:
+        if github_secret_arn and repo_owner:
+
             pipeline.add_stage(
                 stage_name="Source",
                 actions=[
                     codepipeline_actions.GitHubSourceAction(
-                        oauth_token=github_oauth_token,
+                        oauth_token=cdk.SecretValue.secrets_manager(
+                            github_secret_arn, json_field="token"
+                        ),
                         owner=repo_owner,
                         action_name="GetGitHubSource",
                         repo=repo_name,

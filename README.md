@@ -15,13 +15,21 @@ And the following Git providers:
 
 If your repo is already in CodeCommit, you can scoot straight to the section [Cross-Account Deployment with CDK](#cross-account-deployment-with-cdk).
 
-If your repo is in GitHub, you will need to get an oauth token and other details to enable that to be set up.
+### If your repo is in GitHub
+
+You will need to [get an oauth token and other details](https://docs.aws.amazon.com/quickstart/latest/cicd-taskcat/step2.html) to enable that to be set up. You will need to store your oauth token in Secrets Manager in the account and region you will use to run the pipeline. You will need to provide the ARN of your secret when creating the pipeline, which is expected to be found in your secret under the key `token`, eg `{ "token": "<yourtoken>" }` when viewing it as JSON.
+
+If you are deploying to multiple regions make sure you sync your token secret to the other region/s using Secrets Manager replication.
+
+### If your repo is in Bitbucket
 
 If your repo is in Bitbucket, you will need to add support for that, but as Bitbucket is supported by AWS as a source it should be easy.
 
+### If your repo is in GitLab
+
 If your code is in GitLab, this project has a solution that will allow you to use AWS CodePipeline to deploy it.
 
-### Why not just use GitLab CI/CD?
+#### Why not just use GitLab CI/CD?
 
 GitLab CI/CD pipelines run in a GitLab-owned environment and require AWS-account-altering credentials to be stored in GitLab. Choosing instead to deploy using AWS CodePipeline allows you to keep AWS-altering credentials inside your AWS environment while also leveraging the service integrations AWS provides as part of that service.
 
@@ -35,14 +43,14 @@ We're going to use repo mirroring to reflect your GitLab repo into AWS CodeCommi
 
 ### Create a mirror repo in CodeCommit
 
-The `create-repo-<reponame>` stack will allow you to create a CodeCommit repo and IAM user with minimal privileges that can be used to mirror your GitLab repo into CodeCommit.
+The `repo-<reponame>` stack will allow you to create a CodeCommit repo and IAM user with minimal privileges that can be used to mirror your GitLab repo into CodeCommit.
 
 Run this stack, swapping `<reponame>` for the name of the CodeCommit repo you want to create. I suggest you use the original repo name with `-mirror` on the end as your CodeCommit repo name, but you can pass whatever name you like (so long as it's a combination of letters, numbers, periods, underscores, and dashes between 1 and 100 characters in length.
 
 The repo and pipeline stacks should be created in your DevOps/Shared Services account, so use a profile here that will deploy to that account. Also, you will want to create the repo in the same AWS region as your deployment pipeline.
 
 ```
-cdk deploy create-repo-<reponame> \
+cdk deploy repo-<reponame> \
     -c repo=<reponame> \
     -c region=<region> \
     --profile <devops-account-profile>
@@ -114,11 +122,31 @@ These context variables will be used when creating resources inside the stacks.
 
 Additional context variables can be specified on the command line to pass additional configuration into the stacks, as needed. For example, unless you are always deploying to your default region, you may need to pass the region you want to create your stack in using `-c region=<region>`.
 
-> This project requires you to use the same region for all the components you build for a given repo. If your code is in CodeCommit and you need to deploy parts of the same repo to different regions you will need to either mirror it to multiple regions or modify this project to enable [cross-region actions](https://docs.aws.amazon.com/codepipeline/latest/userguide/actions-create-cross-region.html). I found cross-region support a bit patchy and (because I didn't need it) I elected to keep things simple by keeping the repo and pipeline components all in the same region.
+> This project requires you to use the same region for all the components you build for a given repo. If your code is in CodeCommit and you need to deploy parts of the same repo to different regions you will need to either mirror it to multiple regions or modify this project to enable [cross-region actions](https://docs.aws.amazon.com/codepipeline/latest/userguide/actions-create-cross-region.html). I found cross-region support a bit sketchy and (because I didn't need it) I elected to keep things simple by keeping the repo and pipeline components all in the same region. YMMV.
+
+## Bootstrapping
+
+Before you begin, open a text file you can log notes and commands to as you go. To make life easier, list out your accounts and profiles at the top, eg
+
+```
+devops account 327608123456 (sharedservices)
+target account 123345617855 (development)
+```
+
+And bootstrap the CDK into those accounts and regions you will need:
+
+```
+cdk bootstrap aws://327608123456/us-east-1 --profile sharedservices
+cdk bootstrap aws://327608123456/ap-southeast-2 --profile sharedservices
+cdk bootstrap aws://123345617855/us-east-1 --profile development
+cdk bootstrap aws://123345617855/ap-southeast-2 --profile development
+```
+
+As different stacks go into different accounts using different profiles, having these handy will save you some time.
 
 ## Cross-Account Deployment Prerequisites
 
-Before we can achieve cross-account deployments we need to create some infrastructure that will facilitate sharing data and performing operations between accounts - a shared KMS key and some cross-account roles.
+Before we can do cross-account deployments we need to create some infrastructure that will facilitate sharing data and performing operations between accounts - a shared KMS key and some cross-account roles.
 
 ### Create the shared KMS key
 
@@ -127,7 +155,7 @@ Firstly we will use KMS to create a customer-managed key (CMK). This will be uni
 > Reminder: you will need to specify any region that is not your default. If you don't specify `region` your default region will be used.
 
 ```
-cdk deploy create-pipeline-infra-<reponame>-<branch> \
+cdk deploy pipeline-key-<reponame>-<branch> \
     -c repo=<reponame> \
     -c branch=<branch> \
     -c region=<region> \
@@ -152,7 +180,7 @@ There are two ways to build this stack depending on which type of pipeline you a
 **Option 1. If you are building a CloudFormation pipeline:**
 
 ```
-cdk deploy create-cross-account-role-<reponame>-<branch> \
+cdk deploy cross-account-role-<reponame>-<branch> \
     -c repo=<reponame> \
     -c branch=<branch> \
     -c region=<region> \
@@ -168,7 +196,7 @@ This stack will output the ARNs of the two roles it creates, which will be requi
 We need also to pass the name of the bucket we will write the deployment artifacts to, because the pipeline will need to be granted explicit access to operate on it.
 
 ```
-cdk deploy create-cross-account-role-<reponame>-<branch> \
+cdk deploy cross-account-role-<reponame>-<branch> \
     -c repo=<reponame> \
     -c branch=<branch> \
     -c region=<region> \
@@ -190,7 +218,7 @@ This pipeline will include an S3Deploy action - see the [example-s3-buildspec.ym
 
 ![Diagram of S3 pipeline](docs/s3.png "Diagram of S3 pipeline")
 
-To create this pipeline, we will deploy an instance of the `s3-create-pipeline` stack.
+To create this pipeline, we will deploy an instance of the `s3-pipeline` stack.
 
 > This project assumes some other build process has already created the bucket you will be deploying to, as your target bucket will typically have things like CloudFront distributions associated with them, etc.
 
@@ -205,7 +233,7 @@ Optionally, you can pass a list of approvers which will create a manual approval
 The final CLI command should look something like this (assuming no manual approval stage):
 
 ```
-cdk deploy s3-create-pipeline-<reponame>-<branch> \
+cdk deploy s3-pipeline-<reponame>-<branch> \
     -c target_bucket=<deploy-bucket-name> \
     -c repo=<reponame> \
     -c region=<region> \
@@ -220,7 +248,7 @@ cdk deploy s3-create-pipeline-<reponame>-<branch> \
 For deployments into your production environment, add the `approvers` context variable:
 
 ```
-cdk deploy s3-create-pipeline-<reponame>-<branch> \
+cdk deploy s3-pipeline-<reponame>-<branch> \
     -c target_bucket=<deploy-bucket-name> \
     -c repo=<reponame> \
     -c region=<region> \
@@ -254,7 +282,7 @@ The process is similar to the S3 process but we don't need the name of the deplo
 The final CLI command should look something like this:
 
 ```
-cdk deploy cf-create-pipeline-<reponame>-<branch> \
+cdk deploy cf-pipeline-<reponame>-<branch> \
     -c repo=<reponame> \
     -c region=<region> \
     -c branch=<branch> \
@@ -268,7 +296,7 @@ cdk deploy cf-create-pipeline-<reponame>-<branch> \
 As with the S3 Pipeline, you can add manual approval as a stage before the CloudFormation Execute Change Set stage by adding the `-c approvers="<someone@somewhere.com>"`.
 
 ```
-cdk deploy cf-create-pipeline-<reponame>-<branch> \
+cdk deploy cf-pipeline-<reponame>-<branch> \
     -c repo=<reponame> \
     -c region=<region> \
     -c branch=<branch> \

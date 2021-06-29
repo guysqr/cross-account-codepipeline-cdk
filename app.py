@@ -10,6 +10,8 @@ from stacks.cross_account_role_stack import CrossAccountRoleStack
 from stacks.pipeline_infra_stack import PipelineInfraStack
 from stacks.parameter_stack import ParameterStack
 
+from stacks.demo_s3_cloudfront import DemoCloudfrontStack
+
 import os
 
 app = cdk.App()
@@ -25,7 +27,7 @@ deploy_region = os.environ["CDK_DEFAULT_REGION"]
 # repo config
 repo = app.node.try_get_context("repo")
 branch = app.node.try_get_context("branch")
-github_oauth_token = app.node.try_get_context("github_oauth_token")
+github_secret_arn = app.node.try_get_context("github_secret_arn")
 repo_owner = app.node.try_get_context("repo_owner")
 
 # buckets
@@ -52,13 +54,19 @@ deploy_environment = cdk.Environment(account=account_num, region=deploy_region)
 if build_env == None:
     build_env = ""
 
+DemoCloudfrontStack(
+    app,
+    "demo-app-bucket",
+    env=cdk.Environment(account=target_account_id, region="us-east-1"),
+)
+
 if repo and branch:
 
     if target_account_id:
         # create in the devops account
         PipelineInfraStack(
             app,
-            "create-pipeline-infra-" + repo + "-" + branch,
+            "pipeline-key-" + repo + "-" + branch,
             target_account_id=target_account_id,
             repo_name=repo,
             repo_branch=branch,
@@ -68,7 +76,7 @@ if repo and branch:
     if devops_account_id:
         CrossAccountRoleStack(
             app,
-            "create-cross-account-role-" + repo + "-" + branch,
+            "cross-account-role-" + repo + "-" + branch,
             devops_account_id=devops_account_id,
             pipeline_key_arn=pipeline_key_arn,
             artifact_bucket=artifact_bucket,
@@ -79,15 +87,22 @@ if repo and branch:
 if repo:
     RepoStack(
         app,
-        "create-repo-" + repo,
+        "repo-" + repo,
         repo_name=repo,
+        env=deploy_environment,
+    )
+else:
+    RepoStack(
+        app,
+        "repo-dummy",
+        repo_name="dummy",
         env=deploy_environment,
     )
 
 if all([target_bucket, repo, branch, cross_account_role]):
     S3PipelineStack(
         app,
-        "s3-create-pipeline-" + repo + "-" + branch,
+        "s3-pipeline-" + repo + "-" + branch,
         repo_name=repo,
         repo_branch=branch,
         build_env=build_env,
@@ -95,17 +110,17 @@ if all([target_bucket, repo, branch, cross_account_role]):
         approvers=approvers,
         cross_account_role_arn=cross_account_role,
         env=deploy_environment,
-        github_oauth_token=github_oauth_token,
+        github_secret_arn=github_secret_arn,
         repo_owner=repo_owner,
     )
 
 if all([repo, branch, cross_account_role, deployment_role_arn]):
     CloudformationPipelineStack(
         app,
-        "cf-create-pipeline-" + repo + "-" + branch,
+        "cf-pipeline-" + repo + "-" + branch,
         repo_name=repo,
         repo_branch=branch,
-        github_oauth_token=github_oauth_token,
+        github_secret_arn=github_secret_arn,
         build_env=build_env,
         stack_name=stack_name,
         repo_owner=repo_owner,
@@ -127,9 +142,11 @@ if all([parameter_list, repo, branch]):
 
 if build_env:
     Aspects.of(app).add(cdk.Tag("environment-type", build_env))
+if repo:
+    Aspects.of(app).add(cdk.Tag("repository", repo))
+if branch:
+    Aspects.of(app).add(cdk.Tag("branch", branch))
 
-Aspects.of(app).add(cdk.Tag("repository", repo))
-Aspects.of(app).add(cdk.Tag("branch", branch))
 # more tags here
 
 app.synth()

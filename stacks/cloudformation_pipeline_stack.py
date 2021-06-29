@@ -49,7 +49,7 @@ class CloudformationPipelineStack(cdk.Stack):
             self,
             "DeployKey",
             key_arn=cdk.Fn.import_value(
-                self.stack_name.replace("cf-create-pipeline", "create-pipeline-infra")
+                self.stack_name.replace("cf-pipeline", "pipeline-key")
                 + ":PipelineKeyArn"
             ),
         )
@@ -70,7 +70,7 @@ class CloudformationPipelineStack(cdk.Stack):
         )
 
         # derive the target account id from the supplied role
-        target_account_id = cross_account_role.principal_account
+        # target_account_id = cross_account_role.principal_account
 
         deployment_role = iam.Role.from_role_arn(
             self,
@@ -78,24 +78,24 @@ class CloudformationPipelineStack(cdk.Stack):
             role_arn=deployment_role_arn,
         )
 
-        artifacts_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                actions=["s3:Get*", "s3:Put*"],
-                resources=[artifacts_bucket.arn_for_objects("*")],
-                principals=[iam.AccountPrincipal(account_id=target_account_id)],
-            )
-        )
+        # artifacts_bucket.add_to_resource_policy(
+        #     iam.PolicyStatement(
+        #         actions=["s3:Get*", "s3:Put*"],
+        #         resources=[artifacts_bucket.arn_for_objects("*")],
+        #         principals=[iam.AccountPrincipal(account_id=target_account_id)],
+        #     )
+        # )
 
-        artifacts_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                actions=["s3:List*"],
-                resources=[
-                    artifacts_bucket.bucket_arn,
-                    artifacts_bucket.arn_for_objects("*"),
-                ],
-                principals=[iam.AccountPrincipal(account_id=target_account_id)],
-            )
-        )
+        # artifacts_bucket.add_to_resource_policy(
+        #     iam.PolicyStatement(
+        #         actions=["s3:List*"],
+        #         resources=[
+        #             artifacts_bucket.bucket_arn,
+        #             artifacts_bucket.arn_for_objects("*"),
+        #         ],
+        #         principals=[iam.AccountPrincipal(account_id=target_account_id)],
+        #     )
+        # )
 
         # create the pipeline and tell it to use the artifacts bucket
         pipeline = codepipeline.Pipeline(
@@ -103,18 +103,22 @@ class CloudformationPipelineStack(cdk.Stack):
             "Pipeline-" + repo_name + "-" + repo_branch,
             artifact_bucket=artifacts_bucket,
             pipeline_name="pipeline-" + repo_name + "-" + repo_branch,
+            # TODO check if this is needed
+            # TODO check if this is needed
+            # TODO check if this is needed
+            # TODO check if this is needed
             cross_account_keys=True,
             restart_execution_on_update=True,
         )
 
         # allow the pipeline to assume any role in the target account
-        cross_account_access = iam.PolicyStatement(
-            actions=["sts:AssumeRole"],
-            effect=iam.Effect.ALLOW,
-            resources=["arn:aws:iam::" + target_account_id + ":role/*"],
-        )
+        # cross_account_access = iam.PolicyStatement(
+        #     actions=["sts:AssumeRole"],
+        #     effect=iam.Effect.ALLOW,
+        #     resources=["arn:aws:iam::" + target_account_id + ":role/*"],
+        # )
 
-        pipeline.add_to_role_policy(cross_account_access)
+        # pipeline.add_to_role_policy(cross_account_access)
 
         # create the source stage, which grabs the code from the repo and outputs it as an artifact
         source_output = codepipeline.Artifact()

@@ -24,6 +24,4 @@ artifacts:
   discard-paths: no
   files:
     - "**/*"
-  base-directory: build
   name: build-artifacts
-  discard-paths: no
