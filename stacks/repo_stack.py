@@ -40,7 +40,6 @@ class RepoStack(cdk.Stack):
             effect=iam.Effect.ALLOW,
             resources=[code_repo.repository_arn],
         )
-
         custom_policy_document = iam.PolicyDocument(
             statements=[mirror_policy_statement]
         )
