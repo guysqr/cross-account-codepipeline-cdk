@@ -5,9 +5,9 @@ from aws_cdk import (
     aws_iam as iam,
 )
 
-####################################################################################################
+##################################################################################
 # This stack needs to be created in the target account the pipeline will deploy to
-####################################################################################################
+##################################################################################
 
 
 class CrossAccountRoleStack(cdk.Stack):
@@ -46,10 +46,10 @@ class CrossAccountRoleStack(cdk.Stack):
         policy_statements = []
         deploy_policy_statements = []
 
-        ####################################################################################################
+        #########################################################################################
         # These policies are required in both deployment types, to read artifacts and use the key
         # see https://aws.amazon.com/premiumsupport/knowledge-center/codepipeline-deploy-cloudformation/
-        ####################################################################################################
+        #########################################################################################
 
         policy_statements.append(
             iam.PolicyStatement(
