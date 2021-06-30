@@ -63,7 +63,7 @@ if repo and branch:
 
     if target_account_id:
         # create in the devops account
-        PipelineInfraStack(
+        PipelineKeyStack(
             app,
             "pipeline-key-" + repo + "-" + branch,
             target_account_id=target_account_id,
