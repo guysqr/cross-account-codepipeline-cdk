@@ -1,0 +1,38 @@
+import constructs
+import aws_cdk as cdk
+
+from aws_cdk import (
+    aws_iam as iam,
+    aws_kms as kms,
+)
+
+class PipelineKeyStack(cdk.Stack):
+    def __init__(
+        self,
+        scope: constructs.Construct,
+        id: str,
+        target_account_id: str,
+        repo_name: str,
+        repo_branch: str,
+        **kwargs
+    ) -> None:
+        super().__init__(scope, id, **kwargs)
+
+        pipeline_key = kms.Key(
+            self,
+            "PipelineKey",
+            description="CICD CMK shared with " + target_account_id,
+            alias="cicd-" + repo_name + "-" + repo_branch + "-" + target_account_id,
+            enable_key_rotation=False,
+            # trust_account_identities=True, <- deprecated
+        )
+
+        # the target account needs to be able to use the key to decrypt the artifacts
+        pipeline_key.grant_decrypt(iam.AccountPrincipal(account_id=target_account_id))
+
+        cdk.CfnOutput(
+            self,
+            "PipelineKeyArnOutput",
+            value=pipeline_key.key_arn,
+            export_name=self.stack_name + ":PipelineKeyArn",
+        )
