@@ -83,7 +83,6 @@ class CloudformationPipelineStack(cdk.Stack):
                 actions=["s3:Get*", "s3:Put*"],
                 resources=[artifacts_bucket.arn_for_objects("*")],
                 principals=[iam.ArnPrincipal(arn=deployment_role_arn)]
-                # principals=[iam.AccountPrincipal(account_id=target_account_id)],
             )
         )
 
