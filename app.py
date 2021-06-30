@@ -4,12 +4,11 @@ import aws_cdk as cdk
 from aws_cdk import Aspects
 
 from stacks.repo_stack import RepoStack
+from stacks.pipeline_infra_stack import PipelineInfraStack
+from stacks.cross_account_role_stack import CrossAccountRoleStack
 from stacks.cloudformation_pipeline_stack import CloudformationPipelineStack
 from stacks.s3_pipeline_stack import S3PipelineStack
-from stacks.cross_account_role_stack import CrossAccountRoleStack
-from stacks.pipeline_infra_stack import PipelineInfraStack
 from stacks.parameter_stack import ParameterStack
-
 from stacks.demo_s3_cloudfront import DemoCloudfrontStack
 
 import os
