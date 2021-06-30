@@ -69,9 +69,6 @@ class CloudformationPipelineStack(cdk.Stack):
             role_arn=cross_account_role_arn,
         )
 
-        # derive the target account id from the supplied role
-        # target_account_id = cross_account_role.principal_account
-
         deployment_role = iam.Role.from_role_arn(
             self,
             "DeploymentRole",
@@ -94,7 +91,6 @@ class CloudformationPipelineStack(cdk.Stack):
                     artifacts_bucket.arn_for_objects("*"),
                 ],
                 principals=[iam.ArnPrincipal(arn=deployment_role_arn)]
-                # principals=[iam.AccountPrincipal(account_id=target_account_id)],
             )
         )
 
@@ -104,22 +100,9 @@ class CloudformationPipelineStack(cdk.Stack):
             "Pipeline-" + repo_name + "-" + repo_branch,
             artifact_bucket=artifacts_bucket,
             pipeline_name="pipeline-" + repo_name + "-" + repo_branch,
-            # TODO check if this is needed
-            # TODO check if this is needed
-            # TODO check if this is needed
-            # TODO check if this is needed
             cross_account_keys=True,
             restart_execution_on_update=True,
         )
-
-        # allow the pipeline to assume any role in the target account
-        # cross_account_access = iam.PolicyStatement(
-        #     actions=["sts:AssumeRole"],
-        #     effect=iam.Effect.ALLOW,
-        #     resources=["arn:aws:iam::" + target_account_id + ":role/*"],
-        # )
-
-        # pipeline.add_to_role_policy(cross_account_access)
 
         # create the source stage, which grabs the code from the repo and outputs it as an artifact
         source_output = codepipeline.Artifact()
